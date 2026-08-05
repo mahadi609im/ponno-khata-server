@@ -25,6 +25,10 @@ app.get('/', (req, res) => {
   res.send('PonnoKhata API Running...');
 });
 
+const cloudinary = require('./config/cloudinary');
+
+console.log('Cloudinary Name:', process.env.CLOUDINARY_CLOUD_NAME);
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

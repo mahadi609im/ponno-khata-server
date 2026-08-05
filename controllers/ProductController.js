@@ -1,23 +1,36 @@
+const cloudinary = require('../config/cloudinary');
 const Product = require('../models/Products');
 
 // Create Product
 const createProduct = async (req, res) => {
-  const {
-    shopId,
-    categoryId,
-    name,
-    image,
-    buyPrice,
-    minSellPrice,
-    maxSellPrice,
-  } = req.body;
+  const { shopId, categoryId, name, buyPrice, minSellPrice, maxSellPrice } =
+    req.body;
 
   try {
+    let imageUrl = '';
+
+    // Image থাকলে Cloudinary তে upload হবে
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString(
+          'base64',
+        )}`,
+        {
+          folder: 'ponno-khata/products',
+        },
+      );
+
+      imageUrl = result.secure_url;
+    }
+
     const product = await Product.create({
       shopId,
       categoryId,
       name,
-      image,
+
+      // image optional
+      image: imageUrl,
+
       buyPrice,
       minSellPrice,
       maxSellPrice,
