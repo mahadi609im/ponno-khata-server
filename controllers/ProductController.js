@@ -3,22 +3,22 @@ const Product = require('../models/Products');
 
 // Create Product
 const createProduct = async (req, res) => {
-  const { shopId, categoryId, name, buyPrice, minSellPrice, maxSellPrice } =
-    req.body;
-
   try {
+    const { shopId, categoryId, name, buyPrice, minSellPrice, maxSellPrice } =
+      req.body;
     let imageUrl = '';
 
     // Image থাকলে Cloudinary তে upload হবে
     if (req.file) {
-      const result = await cloudinary.uploader.upload(
-        `data:${req.file.mimetype};base64,${req.file.buffer.toString(
-          'base64',
-        )}`,
-        {
-          folder: 'ponno-khata/products',
-        },
-      );
+      if (!req.file.buffer) {
+        throw new Error('Multer memory storage is required for buffer upload.');
+      }
+
+      const fileBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+      const result = await cloudinary.uploader.upload(fileBase64, {
+        folder: 'ponno-khata/products',
+      });
 
       imageUrl = result.secure_url;
     }
@@ -27,10 +27,7 @@ const createProduct = async (req, res) => {
       shopId,
       categoryId,
       name,
-
-      // image optional
-      image: imageUrl,
-
+      image: imageUrl, // image optional
       buyPrice,
       minSellPrice,
       maxSellPrice,
@@ -42,11 +39,11 @@ const createProduct = async (req, res) => {
       product,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Create Product Backend Error Details:', error);
 
     return res.status(500).json({
       success: false,
-      message: 'Server Error',
+      message: error.message || 'Server Error',
     });
   }
 };
