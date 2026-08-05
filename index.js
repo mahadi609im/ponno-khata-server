@@ -6,6 +6,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const shopRoutes = require('./routes/shopRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/shops', shopRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
 
 // Test Route
 app.get('/', (req, res) => {
