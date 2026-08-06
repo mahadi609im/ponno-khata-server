@@ -12,6 +12,16 @@ const shopSchema = new mongoose.Schema(
     pin: {
       type: String,
       required: true,
+      unique: true,
+      minlength: 4,
+      maxlength: 6,
+    },
+
+    key: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true,
     },
   },
   {
@@ -19,4 +29,4 @@ const shopSchema = new mongoose.Schema(
   },
 );
 
-module.exports = mongoose.model('shop', shopSchema);
+module.exports = mongoose.model('Shop', shopSchema);
