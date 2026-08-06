@@ -4,6 +4,7 @@ const {
   createProduct,
   getProductsByCategory,
   getProductsByShop,
+  getGroupedProducts,
   deleteProduct,
   updateProduct,
 } = require('../controllers/ProductController');
@@ -19,6 +20,9 @@ productRoutes.get('/category/:categoryId', getProductsByCategory);
 
 // Get Products by Shop
 productRoutes.get('/shop/:shopId', getProductsByShop);
+
+// Get All Products Grouped By Category
+productRoutes.get('/grouped/:shopId', getGroupedProducts);
 
 // Update Product
 productRoutes.patch('/:id', updateProduct);

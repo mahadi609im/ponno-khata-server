@@ -1,5 +1,6 @@
 const cloudinary = require('../config/cloudinary');
 const Product = require('../models/Products');
+const Category = require('../models/Category');
 
 // Create Product
 const createProduct = async (req, res) => {
@@ -90,6 +91,40 @@ const getProductsByShop = async (req, res) => {
   }
 };
 
+// Get All Products Grouped By Category
+const getGroupedProducts = async (req, res) => {
+  const { shopId } = req.params;
+
+  try {
+    const categories = await Category.find({ shopId });
+
+    const groupedProducts = await Promise.all(
+      categories.map(async category => {
+        const products = await Product.find({
+          categoryId: category._id,
+        });
+
+        return {
+          category,
+          products,
+        };
+      }),
+    );
+
+    return res.status(200).json({
+      success: true,
+      groupedProducts,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server Error',
+    });
+  }
+};
+
 // Update Product
 const updateProduct = async (req, res) => {
   const { id } = req.params;
@@ -165,6 +200,7 @@ module.exports = {
   createProduct,
   getProductsByCategory,
   getProductsByShop,
+  getGroupedProducts,
   updateProduct,
   deleteProduct,
 };
