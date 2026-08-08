@@ -59,15 +59,18 @@ const registerShop = async (req, res) => {
 };
 
 const loginShop = async (req, res) => {
-  const { pin } = req.body;
+  const { pin, key } = req.body;
 
   try {
-    const shop = await Shop.findOne({ pin }).select('-pin');
+    const shop = await Shop.findOne({
+      pin,
+      $or: [{ shopName: key }, { key: key }],
+    }).select('-pin');
 
     if (!shop) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid PIN',
+        message: 'Invalid PIN or Shop Name/Key',
       });
     }
 
