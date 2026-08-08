@@ -62,7 +62,7 @@ const loginShop = async (req, res) => {
   const { pin } = req.body;
 
   try {
-    const shop = await Shop.findOne({ pin }).select('-pin -key');
+    const shop = await Shop.findOne({ pin }).select('-pin');
 
     if (!shop) {
       return res.status(401).json({
