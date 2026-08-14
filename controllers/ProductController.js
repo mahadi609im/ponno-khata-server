@@ -134,84 +134,55 @@ const getGroupedProducts = async (req, res) => {
 };
 
 // Update Product
-export const useUpdateProduct = () => {
-  const axiosSecure = useAxiosSecure();
-  const queryClient = useQueryClient();
+const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      buyPrice,
+      minSellPrice,
+      maxSellPrice,
+      note,
+      categoryId,
+      shopId,
+    } = req.body;
 
-  return useMutation({
-    mutationFn: async ({ id, updateData }) => {
-      const isFormData = updateData instanceof FormData;
+    // ১. একটি আপডেট অবজেক্ট তৈরি করুন
+    const updateFields = {
+      name,
+      buyPrice,
+      minSellPrice,
+      maxSellPrice,
+      categoryId,
+      shopId,
+    };
 
-      // এখানে axiosSecure.put এর বদলে axiosSecure.patch করতে হবে
-      const { data } = await axiosSecure.patch(
-        `/api/products/${id}`,
-        updateData,
-        {
-          headers: {
-            'Content-Type': isFormData
-              ? 'multipart/form-data'
-              : 'application/json',
-          },
-        },
-      );
+    if (note !== undefined) {
+      updateFields.note = note;
+    }
 
-      return data;
-    },
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { $set: updateFields },
+      { new: true, runValidators: true },
+    );
 
-    onSuccess: (data, variables) => {
-      const { updateData } = variables;
+    if (!updatedProduct) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Product not found' });
+    }
 
-      const categoryId =
-        updateData instanceof FormData
-          ? updateData.get('categoryId')
-          : updateData.categoryId;
-
-      const shopId =
-        updateData instanceof FormData
-          ? updateData.get('shopId')
-          : updateData.shopId;
-
-      // Single Category Products
-      if (categoryId) {
-        queryClient.invalidateQueries({
-          queryKey: ['products', categoryId],
-        });
-        queryClient.refetchQueries({
-          queryKey: ['products', categoryId],
-        });
-      }
-
-      // Shop Products & Grouped Products
-      if (shopId) {
-        queryClient.invalidateQueries({
-          queryKey: ['products-shop', shopId],
-        });
-        queryClient.refetchQueries({
-          queryKey: ['products-shop', shopId],
-        });
-
-        queryClient.invalidateQueries({
-          queryKey: ['grouped-products', shopId],
-        });
-        queryClient.refetchQueries({
-          queryKey: ['grouped-products', shopId],
-        });
-      }
-
-      // Backup
-      queryClient.invalidateQueries({
-        queryKey: ['products'],
-      });
-    },
-
-    onError: error => {
-      console.error(
-        'Update Product Error:',
-        error.response?.data || error.message,
-      );
-    },
-  });
+    res.status(200).json({
+      success: true,
+      message: 'Product updated successfully',
+      product: updatedProduct,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
+
 // Delete Product
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
