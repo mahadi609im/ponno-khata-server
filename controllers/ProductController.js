@@ -5,8 +5,15 @@ const Category = require('../models/Category');
 // Create Product
 const createProduct = async (req, res) => {
   try {
-    const { shopId, categoryId, name, buyPrice, minSellPrice, maxSellPrice } =
-      req.body;
+    const {
+      shopId,
+      categoryId,
+      name,
+      buyPrice,
+      minSellPrice,
+      maxSellPrice,
+      note,
+    } = req.body;
     let imageUrl = '';
 
     // Image থাকলে Cloudinary তে upload হবে
@@ -32,6 +39,7 @@ const createProduct = async (req, res) => {
       buyPrice,
       minSellPrice,
       maxSellPrice,
+      note: note || '', // নতুন নোট ফিল্ড
     });
 
     return res.status(201).json({
@@ -126,46 +134,83 @@ const getGroupedProducts = async (req, res) => {
 };
 
 // Update Product
-const updateProduct = async (req, res) => {
-  const { id } = req.params;
+export const useUpdateProduct = () => {
+  const axiosSecure = useAxiosSecure();
+  const queryClient = useQueryClient();
 
-  const { name, image, buyPrice, minSellPrice, maxSellPrice } = req.body;
+  return useMutation({
+    mutationFn: async ({ id, updateData }) => {
+      // যদি ইমেজসহ বা শুধু ডেটা পাঠানো হয় (FormData বা সাধারণ Object)
+      const isFormData = updateData instanceof FormData;
 
-  try {
-    const product = await Product.findByIdAndUpdate(
-      id,
-      {
-        name,
-        image,
-        buyPrice,
-        minSellPrice,
-        maxSellPrice,
-      },
-      {
-        new: true,
-      },
-    );
+      const { data } = await axiosSecure.put(
+        `/api/products/${id}`,
+        updateData,
+        {
+          headers: {
+            'Content-Type': isFormData
+              ? 'multipart/form-data'
+              : 'application/json',
+          },
+        },
+      );
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found',
+      return data;
+    },
+
+    onSuccess: (data, variables) => {
+      const { updateData } = variables;
+
+      const categoryId =
+        updateData instanceof FormData
+          ? updateData.get('categoryId')
+          : updateData.categoryId;
+
+      const shopId =
+        updateData instanceof FormData
+          ? updateData.get('shopId')
+          : updateData.shopId;
+
+      // Single Category Products
+      if (categoryId) {
+        queryClient.invalidateQueries({
+          queryKey: ['products', categoryId],
+        });
+        queryClient.refetchQueries({
+          queryKey: ['products', categoryId],
+        });
+      }
+
+      // Shop Products & Grouped Products
+      if (shopId) {
+        queryClient.invalidateQueries({
+          queryKey: ['products-shop', shopId],
+        });
+        queryClient.refetchQueries({
+          queryKey: ['products-shop', shopId],
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ['grouped-products', shopId],
+        });
+        queryClient.refetchQueries({
+          queryKey: ['grouped-products', shopId],
+        });
+      }
+
+      // Backup
+      queryClient.invalidateQueries({
+        queryKey: ['products'],
       });
-    }
+    },
 
-    return res.status(200).json({
-      success: true,
-      message: 'Product updated successfully',
-      product,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Server Error',
-    });
-  }
+    onError: error => {
+      console.error(
+        'Update Product Error:',
+        error.response?.data || error.message,
+      );
+    },
+  });
 };
 
 // Delete Product

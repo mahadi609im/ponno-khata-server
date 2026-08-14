@@ -39,6 +39,13 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+
+    // নতুন নোট ফিল্ড যোগ করা হলো
+    note: {
+      type: String,
+      default: '',
+      trim: true,
+    },
   },
   {
     timestamps: true,
