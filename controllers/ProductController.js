@@ -140,10 +140,10 @@ export const useUpdateProduct = () => {
 
   return useMutation({
     mutationFn: async ({ id, updateData }) => {
-      // যদি ইমেজসহ বা শুধু ডেটা পাঠানো হয় (FormData বা সাধারণ Object)
       const isFormData = updateData instanceof FormData;
 
-      const { data } = await axiosSecure.put(
+      // এখানে axiosSecure.put এর বদলে axiosSecure.patch করতে হবে
+      const { data } = await axiosSecure.patch(
         `/api/products/${id}`,
         updateData,
         {
@@ -212,7 +212,6 @@ export const useUpdateProduct = () => {
     },
   });
 };
-
 // Delete Product
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
