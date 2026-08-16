@@ -13,6 +13,7 @@ const createProduct = async (req, res) => {
       minSellPrice,
       maxSellPrice,
       note,
+      stock, // স্টক রিসিভ করা হলো
     } = req.body;
     let imageUrl = '';
 
@@ -39,7 +40,8 @@ const createProduct = async (req, res) => {
       buyPrice,
       minSellPrice,
       maxSellPrice,
-      note: note || '', // নতুন নোট ফিল্ড
+      note: note || '',
+      stock: stock ? Number(stock) : 0, // স্টক না দেওয়া থাকলে ডিফল্ট ০ হবে
     });
 
     return res.status(201).json({
@@ -143,6 +145,7 @@ const updateProduct = async (req, res) => {
       minSellPrice,
       maxSellPrice,
       note,
+      stock, // স্টক আপডেট ফিল্ড রিসিভ করা হলো
       categoryId,
       shopId,
     } = req.body;
@@ -159,6 +162,11 @@ const updateProduct = async (req, res) => {
 
     if (note !== undefined) {
       updateFields.note = note;
+    }
+
+    // স্টক ভ্যালু পাঠানো হলে তা আপডেট অবজেক্টে যুক্ত হবে
+    if (stock !== undefined) {
+      updateFields.stock = Number(stock);
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
