@@ -134,16 +134,19 @@ const getGroupedProducts = async (req, res) => {
 };
 
 // Update Product
+// Update Product
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Request Body:', req.body);
+
     const {
       name,
       buyPrice,
       minSellPrice,
       maxSellPrice,
       note,
-      stock, // stock যোগ করা হয়েছে
+      stock,
       categoryId,
       shopId,
     } = req.body;
@@ -162,7 +165,6 @@ const updateProduct = async (req, res) => {
       updateFields.note = note;
     }
 
-    // stock-এর জন্য লজিক: যদি undefined না হয় তবে আপডেট ফিল্ডে যুক্ত হবে
     if (stock !== undefined) {
       updateFields.stock = stock;
     }
@@ -185,6 +187,7 @@ const updateProduct = async (req, res) => {
       product: updatedProduct,
     });
   } catch (error) {
+    console.error('Update Error:', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
