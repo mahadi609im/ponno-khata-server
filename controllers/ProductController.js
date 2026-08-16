@@ -37,11 +37,11 @@ const createProduct = async (req, res) => {
       categoryId,
       name,
       image: imageUrl, // image optional
-      buyPrice,
-      minSellPrice,
-      maxSellPrice,
+      buyPrice: buyPrice ? Number(buyPrice) : 0,
+      minSellPrice: minSellPrice ? Number(minSellPrice) : 0,
+      maxSellPrice: maxSellPrice ? Number(maxSellPrice) : 0,
       note: note || '',
-      stock: stock ? Number(stock) : 0, // স্টক না দেওয়া থাকলে ডিফল্ট ০ হবে
+      stock: stock !== undefined && stock !== '' ? Number(stock) : 0, // স্টক না দেওয়া থাকলে ডিফল্ট ০ হবে
     });
 
     return res.status(201).json({
@@ -150,22 +150,51 @@ const updateProduct = async (req, res) => {
       shopId,
     } = req.body;
 
-    // ১. একটি আপডেট অবজেক্ট তৈরি করুন
+    // ১. প্রথমে পুরনো প্রোডাক্টটি খুঁজে বের করা (ছবি হ্যান্ডেল করার জন্য)
+    const existingProduct = await Product.findById(id);
+    if (!existingProduct) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Product not found' });
+    }
+
+    let imageUrl = existingProduct.image;
+
+    // ২. নতুন কোনো ছবি (File) দেওয়া হয়ে থাকলে Cloudinary-তে আপলোড হবে
+    if (req.file) {
+      if (!req.file.buffer) {
+        throw new Error('Multer memory storage is required for buffer upload.');
+      }
+
+      const fileBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+      const result = await cloudinary.uploader.upload(fileBase64, {
+        folder: 'ponno-khata/products',
+      });
+
+      imageUrl = result.secure_url;
+    }
+
+    // ৩. আপডেট অবজেক্ট তৈরি করা (Stock, Note এবং Image সহ)
     const updateFields = {
-      name,
-      buyPrice,
-      minSellPrice,
-      maxSellPrice,
-      categoryId,
-      shopId,
+      image: imageUrl,
     };
+
+    if (name !== undefined) updateFields.name = name;
+    if (buyPrice !== undefined) updateFields.buyPrice = Number(buyPrice);
+    if (minSellPrice !== undefined)
+      updateFields.minSellPrice = Number(minSellPrice);
+    if (maxSellPrice !== undefined)
+      updateFields.maxSellPrice = Number(maxSellPrice);
+    if (categoryId !== undefined) updateFields.categoryId = categoryId;
+    if (shopId !== undefined) updateFields.shopId = shopId;
 
     if (note !== undefined) {
       updateFields.note = note;
     }
 
-    // স্টক ভ্যালু পাঠানো হলে তা আপডেট অবজেক্টে যুক্ত হবে
-    if (stock !== undefined) {
+    // স্টক ভ্যালু সঠিকভাবে আপডেট অবজেক্টে যুক্ত করা হলো
+    if (stock !== undefined && stock !== '') {
       updateFields.stock = Number(stock);
     }
 
@@ -175,18 +204,13 @@ const updateProduct = async (req, res) => {
       { new: true, runValidators: true },
     );
 
-    if (!updatedProduct) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Product not found' });
-    }
-
     res.status(200).json({
       success: true,
       message: 'Product updated successfully',
       product: updatedProduct,
     });
   } catch (error) {
+    console.error('Update Product Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
