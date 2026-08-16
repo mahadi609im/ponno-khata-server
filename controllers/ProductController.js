@@ -143,6 +143,7 @@ const updateProduct = async (req, res) => {
       minSellPrice,
       maxSellPrice,
       note,
+      stock, // stock যোগ করা হয়েছে
       categoryId,
       shopId,
     } = req.body;
@@ -159,6 +160,11 @@ const updateProduct = async (req, res) => {
 
     if (note !== undefined) {
       updateFields.note = note;
+    }
+
+    // stock-এর জন্য লজিক: যদি undefined না হয় তবে আপডেট ফিল্ডে যুক্ত হবে
+    if (stock !== undefined) {
+      updateFields.stock = stock;
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
